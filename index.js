@@ -1,24 +1,24 @@
 const express = require("express");
-const app =express()
+const app = express()
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
-const cors =require("cors")
+const cors = require("cors")
 
-const port= process.env.PORT || 5000
+const port = process.env.PORT || 5000
 
 //middle ware
 app.use(cors())
 app.use(express.json())
 
 
-app.get('/',(req,res)=>{
-    res.send('boss is ')
+app.get('/', (req, res) => {
+  res.send('boss is ')
 })
 
-app.listen(port, ()=>{
-    console.log(`server is running on ${port}`)
+app.listen(port, () => {
+  console.log(`server is running on ${port}`)
 })
 
 
@@ -38,12 +38,108 @@ async function run() {
     await client.connect();
 
     const momentUsers = client.db("moment").collection("users")
-    const momentCarts = client.db("moment").collection("carts")
+
+
+
+    // -------------------------------------------JWT
+    app.post('/jwt', async (req, res) => {
+      const user = req.body
+      console.log(user)
+      const token = jwt.sign(user, process.env.ACESS_TOKEN, { expiresIn: '1h' })
+      res.send({ token })
+    })
+
+
+    // --------------------------------------------middleware for jwt--user
+    const verifyToken = (req, res, next) => {
+      const header = req.headers.authorization
+      // console.log("inside verifyToken",header);
+      if (!header) {
+        return res.status(401).send({ message: 'forbidder access' })
+      }
+      const token = header.split(' ')[1]
+      // console.log("inside verify token",token)
+      jwt.verify(token, process.env.ACESS_TOKEN, (err, decoded) => {
+        // console.log("decoded",decoded)
+        if (err) {
+          return res.status(401).send({ message: 'forbidder access' })
+
+        }
+        req.decoded = decoded
+        next()
+      })
+    }
+    // --------------------------------middleware for verify Admin---
+    //--use verify admin after verify the token 
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email
+      const query = { email: email }
+      const user = await bistroUsers.findOne(query)
+      const isAdmin = user?.role === 'admin'
+      if (!isAdmin) {
+        return res.status(401).send({ message: 'forbidden access' })
+      }
+      next()
+    }
+
+// -----------------------------------------users
+app.patch('/users/update/:id',verifyToken,verifyAdmin, async(req,res)=>{
+  const userId= req.params.id;
+  const query= {_id :new ObjectId (userId)}
+  const updateDoc = {
+    $set: {
+     role:"admin"
+    },
+  };
+  const result= await momentUsers.updateOne(query,updateDoc)
+  res.send(result)
+})
+
+app.delete('/users/:id',verifyToken,verifyAdmin, async(req,res)=>{
+  const userId= req.params.id;
+  const query= {_id :new ObjectId (userId)}
+  const result= await momentUsers.deleteOne(query)
+  res.send(result)
+
+})
+
+app.get ('/users',verifyToken,verifyAdmin, async(req,res)=>{
+  const result=await momentUsers.find().toArray()
+  res.send(result)
+})
+
+app.get('/users/admin/:email',verifyToken,verifyAdmin, async(req,res)=>{
+const email=req.params.email;
+const emaiil=req.decoded.email;
+if(email !== emaiil){
+  return res.send(403).send({message:'unauthorized user'})
+}
+const query= {email:email}
+const user= await momentUsers.findOne(query)
+let admin=false
+if(user){
+  admin = user?.role === 'admin'
+}
+res.send({admin})
+})
+
+app.post('/users',async(req,res)=>{
+  const user = req.body
+  const query= {email: user.email}
+  const existingUser= await momentUsers.findOne(query) 
+  if(existingUser){
+    return res.send({message:'email already exist', insertedID: null})
+  }
+  const result = await momentUsers.insertOne(user)
+  res.send(result)
+})
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } 
+  }
   finally {
   }
 }
