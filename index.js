@@ -38,6 +38,9 @@ async function run() {
     await client.connect();
 
     const momentUsers = client.db("moment").collection("users")
+    const momentPremiumMembers = client.db("moment").collection("premium-member")
+    const momentsucess_story = client.db("moment").collection("sucess_story")
+    const momentBio_Data = client.db("moment").collection("biodata")
 
 
 
@@ -82,7 +85,7 @@ async function run() {
       next()
     }
 
-// -----------------------------------------users
+// --------------------------------------------------------------------------users
 app.patch('/users/update/:id',verifyToken,verifyAdmin, async(req,res)=>{
   const userId= req.params.id;
   const query= {_id :new ObjectId (userId)}
@@ -134,6 +137,20 @@ app.post('/users',async(req,res)=>{
   res.send(result)
 })
 
+
+// ----------------premium members--sucess-story--biodata-----------------------------------------------------------
+app.get('/premium', async(req,res)=>{
+  const result = await momentPremiumMembers.find().toArray()
+  res.send(result)
+})
+app.get('/sucess_story', async(req,res)=>{
+  const result = await momentsucess_story.find().toArray()
+  res.send(result)
+})
+app.get('/biodata', async(req,res)=>{
+  const result = await momentBio_Data.find().toArray()
+  res.send(result)
+})
 
 
     // Send a ping to confirm a successful connection
