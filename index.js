@@ -2,7 +2,7 @@ const express = require("express");
 const app = express()
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const cors = require("cors")
 
@@ -84,6 +84,16 @@ async function run() {
       }
       next()
     }
+    const verifyPreium = async (req, res, next) => {
+      const email = req.decoded.email
+      const query = { email: email }
+      const user = await bistroUsers.findOne(query)
+      const isPremium = user?.usertype === 'premium'
+      if (!isPremium) {
+        return res.status(401).send({ message: 'forbidden access' })
+      }
+      next()
+    }
 
 // --------------------------------------------------------------------------users
 app.patch('/users/update/:id',verifyToken,verifyAdmin, async(req,res)=>{
@@ -151,6 +161,12 @@ app.get('/biodata', async(req,res)=>{
   const result = await momentBio_Data.find().toArray()
   res.send(result)
 })
+// app.get('/biodata/:_id', async(req,res)=>{
+//   const userId= req.params._id
+//   const query= {_id: new ObjectId (userId)}
+//   const result = await momentBio_Data.findOne(query).toArray()
+//   res.send(result)
+// })
 
 
     // Send a ping to confirm a successful connection
