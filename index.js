@@ -41,13 +41,13 @@ async function run() {
     const momentPremiumMembers = client.db("moment").collection("premium-member")
     const momentsucess_story = client.db("moment").collection("sucess_story")
     const momentBio_Data = client.db("moment").collection("biodata")
+    const momentContact_req = client.db("moment").collection("contact_req")
 
 
 
     // -------------------------------------------JWT
     app.post('/jwt', async (req, res) => {
       const user = req.body
-      console.log(user)
       const token = jwt.sign(user, process.env.ACESS_TOKEN, { expiresIn: '1h' })
       res.send({ token })
     })
@@ -77,7 +77,7 @@ async function run() {
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email
       const query = { email: email }
-      const user = await bistroUsers.findOne(query)
+      const user = await momentUsers.findOne(query)
       const isAdmin = user?.role === 'admin'
       if (!isAdmin) {
         return res.status(401).send({ message: 'forbidden access' })
@@ -87,7 +87,7 @@ async function run() {
     const verifyPreium = async (req, res, next) => {
       const email = req.decoded.email
       const query = { email: email }
-      const user = await bistroUsers.findOne(query)
+      const user = await momentUsers.findOne(query)
       const isPremium = user?.usertype === 'premium'
       if (!isPremium) {
         return res.status(401).send({ message: 'forbidden access' })
@@ -96,12 +96,23 @@ async function run() {
     }
 
 // --------------------------------------------------------------------------users
-app.patch('/users/update/:id',verifyToken,verifyAdmin, async(req,res)=>{
+app.patch('/users/admin/:id',verifyToken,verifyAdmin, async(req,res)=>{
   const userId= req.params.id;
   const query= {_id :new ObjectId (userId)}
   const updateDoc = {
     $set: {
      role:"admin"
+    },
+  };
+  const result= await momentUsers.updateOne(query,updateDoc)
+  res.send(result)
+})
+app.patch('/users/premium/:id',verifyToken,verifyAdmin, async(req,res)=>{
+  const userId= req.params.id;
+  const query= {_id :new ObjectId (userId)}
+  const updateDoc = {
+    $set: {
+      usertype:"premium"
     },
   };
   const result= await momentUsers.updateOne(query,updateDoc)
@@ -121,7 +132,18 @@ app.get ('/users',verifyToken,verifyAdmin, async(req,res)=>{
   res.send(result)
 })
 
-app.get('/users/admin/:email',verifyToken,verifyAdmin, async(req,res)=>{
+app.get('/users/admin/:email',verifyToken,async(req,res)=>{
+const email=req.params.email;
+const emaiil=req.decoded.email;
+query= {email:email}
+const user= await momentUsers.findOne(query)
+let admin=false
+if(user){
+  admin = user?.role === 'admin'
+}
+res.send({admin})
+})
+app.get('/users/premium/:email',verifyToken,verifyAdmin, async(req,res)=>{
 const email=req.params.email;
 const emaiil=req.decoded.email;
 if(email !== emaiil){
@@ -129,11 +151,11 @@ if(email !== emaiil){
 }
 const query= {email:email}
 const user= await momentUsers.findOne(query)
-let admin=false
+let premium=false
 if(user){
-  admin = user?.role === 'admin'
+  premium = user?.usertype === 'premium'
 }
-res.send({admin})
+res.send({premium})
 })
 
 app.post('/users',async(req,res)=>{
@@ -147,7 +169,28 @@ app.post('/users',async(req,res)=>{
   res.send(result)
 })
 
-
+// -----------------------req-contact------------------------------
+app.post('/contact-req',async(req,res)=>{
+  const info = req.body
+  const result = await momentContact_req.insertOne(info)
+  res.send(result)
+})
+app.get('/contact-req', async(req,res)=>{
+  const result = await momentContact_req.find().toArray()
+  res.send(result)
+})
+app.patch('/contact-req/pending/:id',verifyToken,verifyAdmin, async(req,res)=>{
+  const reqId= req.params.id;
+  const query= {_id :new ObjectId (reqId)}
+  console.log(reqId)
+  const updateDoc = {
+    $set: {
+      state:"settled"
+    },
+  };
+  const result= await momentContact_req.updateOne(query,updateDoc)
+  res.send(result)
+})
 // ----------------premium members--sucess-story--biodata-----------------------------------------------------------
 app.get('/premium', async(req,res)=>{
   const result = await momentPremiumMembers.find().toArray()
