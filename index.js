@@ -210,6 +210,12 @@ app.get('/biodata', async(req,res)=>{
 //   const result = await momentBio_Data.findOne(query).toArray()
 //   res.send(result)
 // })
+// -----------for Image------
+app.post('/contact-req',async(req,res)=>{
+  const info = req.body
+  const result = await momentContact_req.insertOne(info)
+  res.send(result)
+})
 
 
     // Send a ping to confirm a successful connection
