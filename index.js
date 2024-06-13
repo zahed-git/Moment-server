@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express()
 const jwt = require('jsonwebtoken');
+const stripe= require('stripe')(process.env.STRIP_SECRET)
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
@@ -168,7 +169,26 @@ app.post('/users',async(req,res)=>{
   const result = await momentUsers.insertOne(user)
   res.send(result)
 })
+// ----------------------------Payment--------------
+app.post("/create-payment-intent", async (req, res) => {
+  const { price } = req.body;
+  const amount =parseInt(price*100)
 
+  // Create a PaymentIntent with the order amount and currency
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: "usd",
+    payment_method_types: [
+      "card",
+      "link"
+    ],
+    // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+  
+  });
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+});
 // -----------------------req-contact------------------------------
 app.post('/contact-req',async(req,res)=>{
   const info = req.body
