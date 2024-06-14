@@ -44,6 +44,7 @@ async function run() {
     const momentsucess_story = client.db("moment").collection("sucess_story")
     const momentBio_Data = client.db("moment").collection("biodata")
     const momentContact_req = client.db("moment").collection("contact_req")
+    const momentFav_list = client.db("moment").collection("fav_list")
 
 
 
@@ -174,7 +175,6 @@ app.post('/users',async(req,res)=>{
 app.post("/create-payment-intent", async (req, res) => {
   const { price } = req.body;
   const amount =parseInt(price*100)
-console.log(amount)
   // Create a PaymentIntent with the order amount and currency
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amount,
@@ -235,6 +235,21 @@ app.get('/biodata', async(req,res)=>{
 app.post('/contact-req',async(req,res)=>{
   const info = req.body
   const result = await momentContact_req.insertOne(info)
+  res.send(result)
+})
+// -----------for FAv-List------
+app.post('/fav-list',async(req,res)=>{
+  const info = req.body
+  const query=info.biodataId
+  const existingUser= await momentFav_list.findOne(query) 
+  if(existingUser){
+    return res.send({message:' already added to favorite List', insertedID: null})
+  }
+  const result = await momentFav_list.insertOne(info)
+  res.send(result)
+})
+app.get('/fav-list', async(req,res)=>{
+  const result = await momentFav_list.find().toArray()
   res.send(result)
 })
 
