@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express()
 const jwt = require('jsonwebtoken');
-const stripe= require('stripe')(process.env.STRIP_SECRET)
+const stripe= require('stripe')(process.env.STRIP_SECRET_KEY)
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
@@ -74,7 +74,7 @@ async function run() {
       })
     }
     // --------------------------------middleware for verify Admin---
-    //--use verify admin after verify the token 
+    // --use verify admin after verify the token 
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email
       const query = { email: email }
@@ -85,16 +85,16 @@ async function run() {
       }
       next()
     }
-    const verifyPreium = async (req, res, next) => {
-      const email = req.decoded.email
-      const query = { email: email }
-      const user = await momentUsers.findOne(query)
-      const isPremium = user?.usertype === 'premium'
-      if (!isPremium) {
-        return res.status(401).send({ message: 'forbidden access' })
-      }
-      next()
-    }
+    // const verifyPreium = async (req, res, next) => {
+    //   const email = req.decoded.email
+    //   const query = { email: email }
+    //   const user = await momentUsers.findOne(query)
+    //   const isPremium = user?.usertype === 'premium'
+    //   if (!isPremium) {
+    //     return res.status(401).send({ message: 'forbidden access' })
+    //   }
+    //   next()
+    // }
 
 // --------------------------------------------------------------------------users
 app.patch('/users/admin/:id',verifyToken,verifyAdmin, async(req,res)=>{
@@ -179,8 +179,7 @@ app.post("/create-payment-intent", async (req, res) => {
     amount: amount,
     currency: "usd",
     payment_method_types: [
-      "card",
-      "link"
+      "card"
     ],
     // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
   
