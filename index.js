@@ -1,7 +1,8 @@
 const express = require("express");
 const app = express()
 const jwt = require('jsonwebtoken');
-const stripe= require('stripe')(process.env.STRIP_SECRET_KEY)
+// const stripe= require("stripe")(process.env.STRIP_SECRET_KEY)
+const stripe= require("stripe")('sk_test_51PR6TsCftkOm46GBp9UTNJdYlDBRQQeWnAXJtibTbA5jHwXHc22uEkR3JpIFsKCBVwfCcmIlIK2Xm4lpq271aRi800oAVrDwcb')
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
@@ -173,13 +174,14 @@ app.post('/users',async(req,res)=>{
 app.post("/create-payment-intent", async (req, res) => {
   const { price } = req.body;
   const amount =parseInt(price*100)
-
+console.log(amount)
   // Create a PaymentIntent with the order amount and currency
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amount,
     currency: "usd",
     payment_method_types: [
-      "card"
+      "card",
+      "link"
     ],
     // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
   
@@ -237,6 +239,7 @@ app.post('/contact-req',async(req,res)=>{
 })
 
 
+console.log(process.env.STRIP_SECRET_KEY)
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
