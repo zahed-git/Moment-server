@@ -248,13 +248,15 @@ app.post('/fav-list',async(req,res)=>{
   const result = await momentFav_list.insertOne(info)
   res.send(result)
 })
-app.get('/fav-list', async(req,res)=>{
-  const result = await momentFav_list.find().toArray()
+app.get('/fav-list/:email', async(req,res)=>{
+  const email= req.params.email
+  const query={email:email}
+  const result = await momentFav_list.find(query).toArray()
   res.send(result)
 })
 
 
-console.log(process.env.STRIP_SECRET_KEY)
+// console.log(process.env.STRIP_SECRET_KEY)
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
