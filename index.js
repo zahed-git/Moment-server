@@ -134,8 +134,14 @@ app.get ('/users',verifyToken,verifyAdmin, async(req,res)=>{
   const result=await momentUsers.find().toArray()
   res.send(result)
 })
+app.get ('/users/:email', async(req,res)=>{
+  const email=req.params.email
+  const query={email:email}
+  const result=await momentUsers.find(query).toArray()
+  res.send(result)
+})
 
-app.get('/users/admin/:email',verifyToken,async(req,res)=>{
+app.get('/users/admin/:email',verifyToken,verifyAdmin,async(req,res)=>{
 const email=req.params.email;
 const emaiil=req.decoded.email;
 query= {email:email}
@@ -146,7 +152,8 @@ if(user){
 }
 res.send({admin})
 })
-app.get('/users/premium/:email',verifyToken,verifyAdmin, async(req,res)=>{
+
+app.get('/users/premium/:email',verifyToken, async(req,res)=>{
 const email=req.params.email;
 const emaiil=req.decoded.email;
 if(email !== emaiil){
@@ -196,6 +203,7 @@ app.post('/contact-req',async(req,res)=>{
   const result = await momentContact_req.insertOne(info)
   res.send(result)
 })
+
 app.get('/contact-req', async(req,res)=>{
   const result = await momentContact_req.find().toArray()
   res.send(result)
@@ -211,6 +219,13 @@ app.patch('/contact-req/pending/:id',verifyToken,verifyAdmin, async(req,res)=>{
   };
   const result= await momentContact_req.updateOne(query,updateDoc)
   res.send(result)
+})
+app.delete('/contact-req/:id',verifyToken, async(req,res)=>{
+  const id= req.params.id;
+  const query= {_id :new ObjectId (id)}
+  const result= await momentContact_req.deleteOne(query)
+  res.send(result)
+
 })
 // ----------------premium members--sucess-story--biodata-----------------------------------------------------------
 app.get('/premium', async(req,res)=>{
@@ -231,30 +246,30 @@ app.get('/biodata', async(req,res)=>{
 //   const result = await momentBio_Data.findOne(query).toArray()
 //   res.send(result)
 // })
-// -----------for Image------
-app.post('/contact-req',async(req,res)=>{
-  const info = req.body
-  const result = await momentContact_req.insertOne(info)
-  res.send(result)
-})
+
 // -----------for FAv-List------
 app.post('/fav-list',async(req,res)=>{
   const info = req.body
-  const query=info.biodataId
+  const query={biodataId:info.biodataId}
   const existingUser= await momentFav_list.findOne(query) 
   if(existingUser){
     return res.send({message:' already added to favorite List', insertedID: null})
   }
   const result = await momentFav_list.insertOne(info)
   res.send(result)
-})
-app.get('/fav-list/:email', async(req,res)=>{
-  const email= req.params.email
-  const query={email:email}
-  const result = await momentFav_list.find(query).toArray()
+ })
+app.get('/fav-list', async(req,res)=>{
+  const result = await momentFav_list.find().toArray()
   res.send(result)
 })
+app.delete('/fav-list/:id',verifyToken, async(req,res)=>{
+  const id= req.params.id;
+  console.log(id)
+  const query= {_id :new ObjectId (id)}
+  const result= await momentFav_list.deleteOne(query)
+  res.send(result)
 
+})
 
 // console.log(process.env.STRIP_SECRET_KEY)
     // Send a ping to confirm a successful connection
