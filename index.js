@@ -2,7 +2,7 @@ const express = require("express");
 const app = express()
 const jwt = require('jsonwebtoken');
 // const stripe= require("stripe")(process.env.STRIP_SECRET_KEY)
-const stripe= require("stripe")('sk_test_51PR6TsCftkOm46GBp9UTNJdYlDBRQQeWnAXJtibTbA5jHwXHc22uEkR3JpIFsKCBVwfCcmIlIK2Xm4lpq271aRi800oAVrDwcb')
+const stripe = require("stripe")('sk_test_51PR6TsCftkOm46GBp9UTNJdYlDBRQQeWnAXJtibTbA5jHwXHc22uEkR3JpIFsKCBVwfCcmIlIK2Xm4lpq271aRi800oAVrDwcb')
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
@@ -96,180 +96,184 @@ async function run() {
     //   next()
     // }
 
-// --------------------------------------------------------------------------users
-app.patch('/users/admin/:id',verifyToken,verifyAdmin, async(req,res)=>{
-  const userId= req.params.id;
-  const query= {_id :new ObjectId (userId)}
-  const updateDoc = {
-    $set: {
-     role:"admin"
-    },
-  };
-  const result= await momentUsers.updateOne(query,updateDoc)
-  res.send(result)
-})
-app.patch('/users/premium/:id',verifyToken,verifyAdmin, async(req,res)=>{
-  const userId= req.params.id;
-  const query= {_id :new ObjectId (userId)}
-  const updateDoc = {
-    $set: {
-      usertype:"premium"
-    },
-  };
-  const result= await momentUsers.updateOne(query,updateDoc)
-  res.send(result)
-})
+    // --------------------------------------------------------------------------users
+    app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
+      const userId = req.params.id;
+      const query = { _id: new ObjectId(userId) }
+      const updateDoc = {
+        $set: {
+          role: "admin"
+        },
+      };
+      const result = await momentUsers.updateOne(query, updateDoc)
+      res.send(result)
+    })
+    app.patch('/users/premium/:id', verifyToken, verifyAdmin, async (req, res) => {
+      const userId = req.params.id;
+      const query = { _id: new ObjectId(userId) }
+      const updateDoc = {
+        $set: {
+          usertype: "premium"
+        },
+      };
+      const result = await momentUsers.updateOne(query, updateDoc)
+      res.send(result)
+    })
 
-app.delete('/users/:id',verifyToken,verifyAdmin, async(req,res)=>{
-  const userId= req.params.id;
-  const query= {_id :new ObjectId (userId)}
-  const result= await momentUsers.deleteOne(query)
-  res.send(result)
+    app.delete('/users/:id', verifyToken, verifyAdmin, async (req, res) => {
+      const userId = req.params.id;
+      const query = { _id: new ObjectId(userId) }
+      const result = await momentUsers.deleteOne(query)
+      res.send(result)
 
-})
+    })
 
-app.get ('/users',verifyToken,verifyAdmin, async(req,res)=>{
-  const result=await momentUsers.find().toArray()
-  res.send(result)
-})
-app.get ('/users/:email', async(req,res)=>{
-  const email=req.params.email
-  const query={email:email}
-  const result=await momentUsers.find(query).toArray()
-  res.send(result)
-})
+    app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
+      const result = await momentUsers.find().toArray()
+      res.send(result)
+    })
+    app.get('/users/:email', async (req, res) => {
+      const email = req.params.email
+      const query = { email: email }
+      const result = await momentUsers.find(query).toArray()
+      res.send(result)
+    })
 
-app.get('/users/admin/:email',verifyToken,verifyAdmin,async(req,res)=>{
-const email=req.params.email;
-const emaiil=req.decoded.email;
-query= {email:email}
-const user= await momentUsers.findOne(query)
-let admin=false
-if(user){
-  admin = user?.role === 'admin'
-}
-res.send({admin})
-})
+    app.get('/users/admin/:email', verifyToken, verifyAdmin, async (req, res) => {
+      const email = req.params.email;
+      const emaiil = req.decoded.email;
+      query = { email: email }
+      const user = await momentUsers.findOne(query)
+      let admin = false
+      if (user) {
+        admin = user?.role === 'admin'
+      }
+      res.send({ admin })
+    })
 
-app.get('/users/premium/:email',verifyToken, async(req,res)=>{
-const email=req.params.email;
-const emaiil=req.decoded.email;
-if(email !== emaiil){
-  return res.send(403).send({message:'unauthorized user'})
-}
-const query= {email:email}
-const user= await momentUsers.findOne(query)
-let premium=false
-if(user){
-  premium = user?.usertype === 'premium'
-}
-res.send({premium})
-})
+    app.get('/users/premium/:email', verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const emaiil = req.decoded.email;
+      if (email !== emaiil) {
+        return res.send(403).send({ message: 'unauthorized user' })
+      }
+      const query = { email: email }
+      const user = await momentUsers.findOne(query)
+      let premium = false
+      if (user) {
+        premium = user?.usertype === 'premium'
+      }
+      res.send({ premium })
+    })
 
-app.post('/users',async(req,res)=>{
-  const user = req.body
-  const query= {email: user.email}
-  const existingUser= await momentUsers.findOne(query) 
-  if(existingUser){
-    return res.send({message:'email already exist', insertedID: null})
-  }
-  const result = await momentUsers.insertOne(user)
-  res.send(result)
-})
-// ----------------------------Payment--------------
-app.post("/create-payment-intent", async (req, res) => {
-  const { price } = req.body;
-  const amount =parseInt(price*100)
-  // Create a PaymentIntent with the order amount and currency
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: amount,
-    currency: "usd",
-    payment_method_types: [
-      "card",
-      "link"
-    ],
-    // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
-  
-  });
-  res.send({
-    clientSecret: paymentIntent.client_secret,
-  });
-});
-// -----------------------req-contact------------------------------
-app.post('/contact-req',async(req,res)=>{
-  const info = req.body
-  const result = await momentContact_req.insertOne(info)
-  res.send(result)
-})
+    app.post('/users', async (req, res) => {
+      const user = req.body
+      const query = { email: user.email }
+      const existingUser = await momentUsers.findOne(query)
+      if (existingUser) {
+        return res.send({ message: 'email already exist', insertedID: null })
+      }
+      const result = await momentUsers.insertOne(user)
+      res.send(result)
+    })
+    // ----------------------------Payment--------------
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100)
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: [
+          "card",
+          "link"
+        ],
+        // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
 
-app.get('/contact-req', async(req,res)=>{
-  const result = await momentContact_req.find().toArray()
-  res.send(result)
-})
-app.patch('/contact-req/pending/:id',verifyToken,verifyAdmin, async(req,res)=>{
-  const reqId= req.params.id;
-  const query= {_id :new ObjectId (reqId)}
-  console.log(reqId)
-  const updateDoc = {
-    $set: {
-      state:"settled"
-    },
-  };
-  const result= await momentContact_req.updateOne(query,updateDoc)
-  res.send(result)
-})
-app.delete('/contact-req/:id',verifyToken, async(req,res)=>{
-  const id= req.params.id;
-  const query= {_id :new ObjectId (id)}
-  const result= await momentContact_req.deleteOne(query)
-  res.send(result)
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+    // -----------------------req-contact------------------------------
+    app.post('/contact-req', async (req, res) => {
+      const info = req.body
+      const query = { biodataId: info.biodataId }
+      const existingUser = await momentFav_list.findOne(query)
+      if (existingUser) {
+        return res.send({ message: ' already added to favorite List', insertedID: null })
+      }
+      const result = await momentContact_req.insertOne(info)
+      res.send(result)
+    })
 
-})
-// ----------------premium members--sucess-story--biodata-----------------------------------------------------------
-app.get('/premium', async(req,res)=>{
-  const result = await momentPremiumMembers.find().toArray()
-  res.send(result)
-})
-app.get('/sucess_story', async(req,res)=>{
-  const result = await momentsucess_story.find().toArray()
-  res.send(result)
-})
-app.get('/biodata', async(req,res)=>{
-  const result = await momentBio_Data.find().toArray()
-  res.send(result)
-})
-// app.get('/biodata/:_id', async(req,res)=>{
-//   const userId= req.params._id
-//   const query= {_id: new ObjectId (userId)}
-//   const result = await momentBio_Data.findOne(query).toArray()
-//   res.send(result)
-// })
+    app.get('/contact-req', async (req, res) => {
+      const result = await momentContact_req.find().toArray()
+      res.send(result)
+    })
+    app.patch('/contact-req/pending/:id', verifyToken, verifyAdmin, async (req, res) => {
+      const reqId = req.params.id;
+      const query = { _id: new ObjectId(reqId) }
+      const updateDoc = {
+        $set: {
+           status: "settled"
+        },
+      };
+      const result = await momentContact_req.updateOne(query, updateDoc)
+      res.send(result)
+    })
+    app.delete('/contact-req/:id', verifyToken, async (req, res) => {
+      const id = req.params.id;
+      console.log("contact req delete", id)
+      const query = { _id: new ObjectId(id) }
+      const result = await momentContact_req.deleteOne(query)
+      res.send(result)
 
-// -----------for FAv-List------
-app.post('/fav-list',async(req,res)=>{
-  const info = req.body
-  const query={biodataId:info.biodataId}
-  const existingUser= await momentFav_list.findOne(query) 
-  if(existingUser){
-    return res.send({message:' already added to favorite List', insertedID: null})
-  }
-  const result = await momentFav_list.insertOne(info)
-  res.send(result)
- })
-app.get('/fav-list', async(req,res)=>{
-  const result = await momentFav_list.find().toArray()
-  res.send(result)
-})
-app.delete('/fav-list/:id',verifyToken, async(req,res)=>{
-  const id= req.params.id;
-  console.log(id)
-  const query= {_id :new ObjectId (id)}
-  const result= await momentFav_list.deleteOne(query)
-  res.send(result)
+    })
+    // ----------------premium members--sucess-story--biodata-----------------------------------------------------------
+    app.get('/premium', async (req, res) => {
+      const result = await momentPremiumMembers.find().toArray()
+      res.send(result)
+    })
+    app.get('/sucess_story', async (req, res) => {
+      const result = await momentsucess_story.find().toArray()
+      res.send(result)
+    })
+    app.get('/biodata', async (req, res) => {
+      const result = await momentBio_Data.find().toArray()
+      res.send(result)
+    })
+    // app.get('/biodata/:_id', async(req,res)=>{
+    //   const userId= req.params._id
+    //   const query= {_id: new ObjectId (userId)}
+    //   const result = await momentBio_Data.findOne(query).toArray()
+    //   res.send(result)
+    // })
 
-})
+    // -----------for FAv-List------
+    app.post('/fav-list', async (req, res) => {
+      const info = req.body
+      const query = { biodataId: info.biodataId }
+      const existingUser = await momentFav_list.findOne(query)
+      if (existingUser) {
+        return res.send({ message: ' already added to favorite List', insertedID: null })
+      }
+      const result = await momentFav_list.insertOne(info)
+      res.send(result)
+    })
+    app.get('/fav-list', async (req, res) => {
+      const result = await momentFav_list.find().toArray()
+      res.send(result)
+    })
+    app.delete('/fav-list/:id', verifyToken, async (req, res) => {
+      const id = req.params.id;
+      console.log('fav lsit delete',id)
+      const query = { _id: new ObjectId(id) }
+      const result = await momentFav_list.deleteOne(query)
+      res.send(result)
 
-// console.log(process.env.STRIP_SECRET_KEY)
+    })
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
