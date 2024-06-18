@@ -198,11 +198,11 @@ async function run() {
     // -----------------------req-contact------------------------------
     app.post('/contact-req', async (req, res) => {
       const info = req.body
-      const query = { biodataId: info.biodataId }
-      const existingUser = await momentFav_list.findOne(query)
-      if (existingUser) {
-        return res.send({ message: ' already added to favorite List', insertedID: null })
-      }
+      // const query = { biodataId: info.biodataId }
+      // const existingUser = await momentFav_list.findOne(query)
+      // if (existingUser) {
+      //   return res.send({ message: ' already added to favorite List', insertedID: null })
+      // }
       const result = await momentContact_req.insertOne(info)
       res.send(result)
     })
@@ -224,12 +224,12 @@ async function run() {
     })
     app.delete('/contact-req/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
-      console.log("contact req delete", id)
       const query = { _id: new ObjectId(id) }
       const result = await momentContact_req.deleteOne(query)
       res.send(result)
 
     })
+   
     // ----------------premium members--sucess-story--biodata-----------------------------------------------------------
     app.get('/premium', async (req, res) => {
       const result = await momentPremiumMembers.find().toArray()
@@ -253,17 +253,15 @@ async function run() {
     // -----------for FAv-List------
     app.post('/fav-list', async (req, res) => {
       const info = req.body
-      const query = { biodataId: info.biodataId }
-      const existingUser = await momentFav_list.findOne(query)
-      if (existingUser) {
-        return res.send({ message: ' already added to favorite List', insertedID: null })
-      }
       const result = await momentFav_list.insertOne(info)
       res.send(result)
     })
-    app.get('/fav-list', async (req, res) => {
-      const result = await momentFav_list.find().toArray()
+    app.get('/fav-list/:email', async (req, res) => {
+      const email = req.params.email
+      const query={email}
+      const result = await momentFav_list.find(query).toArray()
       res.send(result)
+      console.log(email)
     })
     app.delete('/fav-list/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
@@ -273,6 +271,7 @@ async function run() {
       res.send(result)
 
     })
+  
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
