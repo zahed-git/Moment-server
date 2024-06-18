@@ -15,9 +15,7 @@ app.use(cors())
 app.use(express.json())
 
 
-app.get('/', (req, res) => {
-  res.send('boss is ')
-})
+
 
 app.listen(port, () => {
   console.log(`server is running on ${port}`)
