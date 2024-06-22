@@ -57,14 +57,11 @@ async function run() {
     // --------------------------------------------middleware for jwt--user
     const verifyToken = (req, res, next) => {
       const header = req.headers.authorization
-      // console.log("inside verifyToken",header);
       if (!header) {
         return res.status(401).send({ message: 'forbidder access' })
       }
       const token = header.split(' ')[1]
-      // console.log("inside verify token",token)
       jwt.verify(token, process.env.ACESS_TOKEN, (err, decoded) => {
-        // console.log("decoded",decoded)
         if (err) {
           return res.status(401).send({ message: 'forbidder access' })
 
@@ -180,7 +177,6 @@ async function run() {
     app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100)
-      // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
@@ -188,8 +184,7 @@ async function run() {
           "card",
           "link"
         ],
-        // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
-
+       
       });
       res.send({
         clientSecret: paymentIntent.client_secret,
@@ -198,11 +193,6 @@ async function run() {
     // -----------------------req-contact------------------------------
     app.post('/contact-req', async (req, res) => {
       const info = req.body
-      // const query = { biodataId: info.biodataId }
-      // const existingUser = await momentFav_list.findOne(query)
-      // if (existingUser) {
-      //   return res.send({ message: ' already added to favorite List', insertedID: null })
-      // }
       const result = await momentContact_req.insertOne(info)
       res.send(result)
     })
@@ -230,25 +220,60 @@ async function run() {
 
     })
    
-    // ----------------premium members--sucess-story--biodata-----------------------------------------------------------
-    app.get('/premium', async (req, res) => {
-      const result = await momentPremiumMembers.find().toArray()
-      res.send(result)
-    })
+    // ------------------sucess-story-------------------------------------------------------------
+    
     app.get('/sucess_story', async (req, res) => {
       const result = await momentsucess_story.find().toArray()
       res.send(result)
     })
+    // --------------------biodatas---------------------------
     app.get('/biodata', async (req, res) => {
       const result = await momentBio_Data.find().toArray()
       res.send(result)
     })
-    // app.get('/biodata/:_id', async(req,res)=>{
-    //   const userId= req.params._id
-    //   const query= {_id: new ObjectId (userId)}
-    //   const result = await momentBio_Data.findOne(query).toArray()
-    //   res.send(result)
-    // })
+    app.get('/premium', async (req, res) => {
+      const query= {type:'pre'}
+      const result = await momentBio_Data.find(query).toArray()
+      res.send(result)
+    })
+    app.get('/biodata/:email', async (req, res) => {
+      const email=req.params.email
+      const query={contactEmail:email}
+      const result = await momentBio_Data.find(query).toArray()
+      res.send(result)
+    })
+    
+    app.put('/biodata/:_id', async (req, res) => {
+      const id = req.params._id;
+      const userInfo = req.body
+      const options = { upsert: true };
+      const query = { _id: new ObjectId(id)}
+      const updateDoc = {
+        $set: {
+          name:userInfo.name,
+          profileImage:userInfo.profileImage,
+          biodataType:userInfo.biodataType,
+          permanentDivision:userInfo.permanentDivision,
+          presentDivision:userInfo.presentDivision,
+          age:userInfo.age,
+          dob:userInfo.dob,
+          height:userInfo.height,
+          weight:userInfo.weight,
+          race:userInfo.race,
+          fathersName:userInfo.fathersName,
+          mothersName:userInfo.mothersName,
+          occupation:userInfo.occupation,
+          expectedPartnerAge:userInfo.expectedPartnerAge,
+          expectedPartnerHeight:userInfo.expectedPartnerHeight,
+          expectedPartnerWeight:userInfo.expectedPartnerWeight,
+          contactEmail:userInfo.contactEmail,
+          mobileNumber:userInfo.mobileNumber
+        }
+      };
+      const result = await momentBio_Data.updateOne(query, updateDoc,options)
+      res.send(result)
+      console.log(res.send)
+    })
 
     // -----------for FAv-List------
     app.post('/fav-list', async (req, res) => {
@@ -261,11 +286,9 @@ async function run() {
       const query={email}
       const result = await momentFav_list.find(query).toArray()
       res.send(result)
-      console.log(email)
     })
     app.delete('/fav-list/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
-      console.log('fav lsit delete',id)
       const query = { _id: new ObjectId(id) }
       const result = await momentFav_list.deleteOne(query)
       res.send(result)
