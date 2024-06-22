@@ -11,7 +11,14 @@ const cors = require("cors")
 const port = process.env.PORT || 5000
 
 //middle ware
-app.use(cors())
+app.use(
+  cors({
+    origin:["http://localhost:5173",
+    "https://moments-weddings.web.app",
+    "https://moments-weddings.firebaseapp.com/"],
+    credentials:true,
+  })
+  )
 app.use(express.json())
 
 
@@ -184,7 +191,7 @@ async function run() {
           "card",
           "link"
         ],
-       
+
       });
       res.send({
         clientSecret: paymentIntent.client_secret,
@@ -206,7 +213,7 @@ async function run() {
       const query = { _id: new ObjectId(reqId) }
       const updateDoc = {
         $set: {
-           status: "settled"
+          status: "settled"
         },
       };
       const result = await momentContact_req.updateOne(query, updateDoc)
@@ -219,70 +226,79 @@ async function run() {
       res.send(result)
 
     })
-   
+
     // ------------------sucess-story-------------------------------------------------------------
-    
+  
     app.get('/sucess_story', async (req, res) => {
       const result = await momentsucess_story.find().toArray()
       res.send(result)
     })
-    // --------------------biodatas---------------------------
+    // --------------------biodatas---------------------------a
+    app.get('/states',async(req, res)=>{
+      // const result=await momentBio_Data.aggregate([
+      //   {
+      //     $group:{
+      //       _id:null,
+      //       Totalbiodata:{
+      //         biodataId
+      //       }
+      //     }
+      //   }
+      // ])
+      const result=await momentBio_Data.estimatedDocumentCount()
+      res.send({result})
+    })
+    app.post('/biodata', async (req, res) => {
+      const info = req.body
+      const result = await momentBio_Data.insertOne(info)
+      res.send(result)
+    })
     app.get('/biodata', async (req, res) => {
       const result = await momentBio_Data.find().toArray()
       res.send(result)
     })
     app.get('/premium', async (req, res) => {
-      const query= {type:'pre'}
+      const query = { type: 'pre' }
       const result = await momentBio_Data.find(query).toArray()
       res.send(result)
     })
     app.get('/biodata/:email', async (req, res) => {
-      const email=req.params.email
-      const query={contactEmail:email}
+      const email = req.params.email
+      const query = { contactEmail: email }
       const result = await momentBio_Data.find(query).toArray()
       res.send(result)
     })
-    
-    app.put('/biodata/:biodataId', async (req, res) => {
-      const biodataId = req.params.biodataId;
-      console.log(biodataId)
-      const userInfo = req.body
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          name:userInfo.name,
-          profileImage:userInfo.profileImage,
-          biodataType:userInfo.biodataType,
-          permanentDivision:userInfo.permanentDivision,
-          presentDivision:userInfo.presentDivision,
-          age:userInfo.age,
-          dob:userInfo.dob,
-          height:userInfo.height,
-          weight:userInfo.weight,
-          race:userInfo.race,
-          fathersName:userInfo.fathersName,
-          mothersName:userInfo.mothersName,
-          occupation:userInfo.occupation,
-          expectedPartnerAge:userInfo.expectedPartnerAge,
-          expectedPartnerHeight:userInfo.expectedPartnerHeight,
-          expectedPartnerWeight:userInfo.expectedPartnerWeight,
-          contactEmail:userInfo.contactEmail,
-          mobileNumber:userInfo.mobileNumber
-        }
-      };
-      if(biodataId){
-        const query = { biodataId:biodataId}
-      
-      const result = await momentBio_Data.updateOne(query, updateDoc,options)
-      res.send(result)
-      }
-      else{
 
-        const query = { biodataId:biodataId}
-      
-      const result = await momentBio_Data.updateOne(query, updateDoc,options)
-      res.send(result)
-      }
+    app.put('/biodata/:_id', async (req, res) => {
+      const id = req.params._id;
+      const userInfo = req.body
+        const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            name: userInfo.name,
+            profileImage: userInfo.profileImage,
+            biodataType: userInfo.biodataType,
+            permanentDivision: userInfo.permanentDivision,
+            presentDivision: userInfo.presentDivision,
+            age: userInfo.age,
+            dob: userInfo.dob,
+            height: userInfo.height,
+            weight: userInfo.weight,
+            race: userInfo.race,
+            fathersName: userInfo.fathersName,
+            mothersName: userInfo.mothersName,
+            occupation: userInfo.occupation,
+            expectedPartnerAge: userInfo.expectedPartnerAge,
+            expectedPartnerHeight: userInfo.expectedPartnerHeight,
+            expectedPartnerWeight: userInfo.expectedPartnerWeight,
+            contactEmail: userInfo.contactEmail,
+            mobileNumber: userInfo.mobileNumber
+          }
+        };
+        const query = { _id: new ObjectId(id) }
+
+        const result = await momentBio_Data.updateOne(query, updateDoc, options)
+        res.send(result)  
     })
 
     // -----------for FAv-List------
@@ -293,7 +309,7 @@ async function run() {
     })
     app.get('/fav-list/:email', async (req, res) => {
       const email = req.params.email
-      const query={email}
+      const query = { email }
       const result = await momentFav_list.find(query).toArray()
       res.send(result)
     })
@@ -304,11 +320,11 @@ async function run() {
       res.send(result)
 
     })
-  
+
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   }
   finally {
   }
