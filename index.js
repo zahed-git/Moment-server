@@ -243,11 +243,11 @@ async function run() {
       res.send(result)
     })
     
-    app.put('/biodata/:_id', async (req, res) => {
-      const id = req.params._id;
+    app.put('/biodata/:biodataId', async (req, res) => {
+      const biodataId = req.params.biodataId;
+      console.log(biodataId)
       const userInfo = req.body
       const options = { upsert: true };
-      const query = { _id: new ObjectId(id)}
       const updateDoc = {
         $set: {
           name:userInfo.name,
@@ -270,9 +270,19 @@ async function run() {
           mobileNumber:userInfo.mobileNumber
         }
       };
+      if(biodataId){
+        const query = { biodataId:biodataId}
+      
       const result = await momentBio_Data.updateOne(query, updateDoc,options)
       res.send(result)
-      console.log(res.send)
+      }
+      else{
+
+        const query = { biodataId:biodataId}
+      
+      const result = await momentBio_Data.updateOne(query, updateDoc,options)
+      res.send(result)
+      }
     })
 
     // -----------for FAv-List------
